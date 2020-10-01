@@ -3,6 +3,9 @@ services:
   web:
     image: nginx
     deploy:
+      placement:
+        constraints:
+          - node.labels.dc = UK
       replicas: 2
       resources:
         limits:
@@ -26,7 +29,7 @@ services:
         constraints: [node.role == manager]
     networks:
       - webserver
-      
+
 networks:
   webserver:      
       
