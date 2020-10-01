@@ -18,9 +18,9 @@ services:
   node-exporter:
     hostname: node-exporter
     image: quay.io/prometheus/node-exporter
-    configs:
-      - source: ./conf/node-exporter/
-        target: /docker-entrypoint.sh
+    #configs:
+    #  - source: ./conf/node-exporter/
+    #    target: /docker-entrypoint.sh
     environment:
       - NODE_ID={{.Node.ID}}  
     command:
