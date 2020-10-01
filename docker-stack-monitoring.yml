@@ -1,7 +1,6 @@
 version: "3.7"
 services:
   prometheus:
-    container_name: prometheus
     hostname: prometheus
     image: prom/prometheus
     volumes:
@@ -17,7 +16,6 @@ services:
       - 9090:9090  
 
   node-exporter:
-    container_name: node-exporter
     hostname: node-exporter
     image: quay.io/prometheus/node-exporter
     configs:
@@ -45,7 +43,6 @@ services:
       - 9100:9100
 
   cadvisor:
-    container_name: cadvisor
     hostname: cadvisor
     image: google/cadvisor
     command: -logtostderr -docker_only
@@ -68,7 +65,6 @@ services:
           memory: 64M      
 
   grafana:
-    container_name: grafana  
     hostname: grafana
     image: grafana/grafana
     volumes:
@@ -83,7 +79,6 @@ services:
       - monitoring
 
   elasticsearch:
-    container_name: elasticsearch
     hostname: elasticsearch
     build:
       context: conf/elasticsearch/
@@ -109,7 +104,6 @@ services:
       - monitoring
 
   logstash:
-    container_name: logstash
     hostname: logstash
     build:
       context: conf/logstash/
@@ -137,7 +131,6 @@ services:
       - elasticsearch
 
   kibana:
-    container_name: kibana
     hostname: kibana
     build:
       context: conf/kibana/
