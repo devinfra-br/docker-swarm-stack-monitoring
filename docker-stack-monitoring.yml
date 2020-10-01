@@ -10,8 +10,8 @@ services:
     links:
       - cadvisor:cadvisor
       - node-exporter:node-exporter
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
     ports:
       - 9090:9090  
 
@@ -37,8 +37,8 @@ services:
       - /proc:/usr/proc
       - /sys:/usr/sys
       - /:/rootfs
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
     ports:
       - 9100:9100
 
@@ -52,8 +52,8 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
     ports:
       - 8081:8080
     deploy:
@@ -75,8 +75,8 @@ services:
       - ./conf/grafana/grafana.config
     depends_on:
       - prometheus      
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
 
   elasticsearch:
     hostname: elasticsearch
@@ -100,8 +100,8 @@ services:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
       ELASTIC_PASSWORD: changeme
       discovery.type: single-node
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
 
   logstash:
     hostname: logstash
@@ -125,8 +125,8 @@ services:
       - "9600:9600"
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
     depends_on:
       - elasticsearch
 
@@ -143,14 +143,12 @@ services:
         read_only: true
     ports:
       - "5601:5601"
-    networks:
-      - monitoring
+    #networks:
+      #- monitoring
     depends_on:
       - elasticsearch
 
-networks:
-  monitoring:
-    external: true
+
 
 volumes:
     prometheus_data:
