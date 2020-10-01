@@ -5,7 +5,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.labels.dc = UK
+          - node.labels.dc == UK
       replicas: 2
       resources:
         limits:
