@@ -1,0 +1,165 @@
+version: "3.7"
+services:
+  prometheus:
+    container_name: prometheus
+    hostname: prometheus
+    image: prom/prometheus
+    volumes:
+      - ./conf/prometheus/:/etc/prometheus/
+      - prometheus_data:/var/lib/prometheus
+    restart: always
+    links:
+      - cadvisor:cadvisor
+      - node-exporter:node-exporter
+    networks:
+      - monitoring
+    ports:
+      - 9090:9090  
+
+  node-exporter:
+    container_name: node-exporter
+    hostname: node-exporter
+    image: quay.io/prometheus/node-exporter
+    configs:
+      - source: ./conf/node-exporter/
+        target: /docker-entrypoint.sh
+    environment:
+      - NODE_ID={{.Node.ID}}  
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)'
+      - '--collector.textfile.directory=/home/'
+      - '--no-collector.ipvs'
+    entrypoint:
+       - /bin/sh
+       - /docker-entrypoint.sh        
+    volumes:
+      - /proc:/usr/proc
+      - /sys:/usr/sys
+      - /:/rootfs
+    networks:
+      - monitoring
+    ports:
+      - 9100:9100
+
+  cadvisor:
+    container_name: cadvisor
+    hostname: cadvisor
+    image: google/cadvisor
+    command: -logtostderr -docker_only
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring
+    ports:
+      - 8081:8080
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M      
+
+  grafana:
+    container_name: grafana  
+    hostname: grafana
+    image: grafana/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./conf/grafana/grafana.config
+    depends_on:
+      - prometheus      
+    networks:
+      - monitoring
+
+  elasticsearch:
+    container_name: elasticsearch
+    hostname: elasticsearch
+    build:
+      context: conf/elasticsearch/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./conf/elasticsearch/config/elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true
+
+      - type: volume
+        source: elasticsearch_data
+        target: /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: changeme
+      discovery.type: single-node
+    networks:
+      - monitoring
+
+  logstash:
+    container_name: logstash
+    hostname: logstash
+    build:
+      context: conf/logstash/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./conf/logstash/config/logstash.yml
+        target: /usr/share/logstash/config/logstash.yml
+        read_only: true
+
+      - type: bind
+        source: ./conf/logstash/pipeline
+        target: /usr/share/logstash/pipeline
+        read_only: true
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    container_name: kibana
+    hostname: kibana
+    build:
+      context: conf/kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./conf/kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - "5601:5601"
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+
+networks:
+  monitoring:
+    external: true
+
+volumes:
+    prometheus_data:
+    grafana_data:
+    elasticsearch_data:
